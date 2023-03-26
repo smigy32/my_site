@@ -1,7 +1,11 @@
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
+from django.urls import reverse
 from django.views.generic import ListView, DetailView
+from django.views import View
 
 from .models import Post
+from .forms import CommentForm
 
 
 class StartingPageView(ListView):
@@ -13,8 +17,7 @@ class StartingPageView(ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset[:3]
-    
-    
+
 
 # def starting_page(request):
 #     latest_posts = Post.objects.all().order_by("-date")[:3]
@@ -37,15 +40,36 @@ class PostsView(ListView):
 #     })
 
 
-class PostDetailView(DetailView):
+class PostDetailView(View):
     template_name = "blog/post-detail.html"
     model = Post
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["post_tags"] = self.object.tags.all()
-        return context
-    
+    def get(self, request, slug):
+        post = Post.objects.get(slug=slug)
+        return render(request, "blog/post-detail.html", {
+            "post": post,
+            "post_tags": post.tags.all(),
+            "comment_form": CommentForm(),
+            "comments": post.comments.all().order_by("-id"),
+        })
+
+    def post(self, request, slug):
+        comment_form = CommentForm(request.POST)
+        post = Post.objects.get(slug=slug)
+
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.post = post
+            comment.save()
+            return HttpResponseRedirect(reverse("post-detail-page", kwargs={"slug": slug, }))
+        
+        
+        return render(request, "blog/post-detail.html", {
+            "post": post,
+            "post_tags": post.tags.all(),
+            "comment_form": comment_form,
+            "comments": post.comments.all().order_by("-id"),
+        })
 
 
 # def post_detail(request, slug):
