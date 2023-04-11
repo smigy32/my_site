@@ -1,11 +1,20 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
+from django.utils.text import slugify
 from django.views.generic import ListView, DetailView
 from django.views import View
+from rest_framework import generics, viewsets
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.decorators import action
 
-from .models import Post
+from .models import Post, Author
 from .forms import CommentForm
+from .serializers import PostSerializer
+
+
+# Regular part
 
 
 class StartingPageView(ListView):
@@ -19,11 +28,15 @@ class StartingPageView(ListView):
         return queryset[:3]
 
 
-# def starting_page(request):
-#     latest_posts = Post.objects.all().order_by("-date")[:3]
-#     return render(request, "blog/index.html", {
-#         "posts": latest_posts,
-#     })
+"""
+This is the same view as above but function (starting page)
+
+def starting_page(request):
+    latest_posts = Post.objects.all().order_by("-date")[:3]
+    return render(request, "blog/index.html", {
+        "posts": latest_posts,
+    })
+"""
 
 
 class PostsView(ListView):
@@ -33,12 +46,15 @@ class PostsView(ListView):
     context_object_name = "all_posts"
 
 
-# def posts(request):
-#     all_posts = Post.objects.all().order_by("-date")
-#     return render(request, "blog/all-posts.html", {
-#         "all_posts": all_posts,
-#     })
+"""
+This is the same view as above but function (get all posts)
 
+def posts(request):
+    all_posts = Post.objects.all().order_by("-date")
+    return render(request, "blog/all-posts.html", {
+        "all_posts": all_posts,
+    })
+"""
 
 class PostDetailView(View):
     def is_stored_post(self, request, post_id):
@@ -68,8 +84,7 @@ class PostDetailView(View):
             comment.post = post
             comment.save()
             return HttpResponseRedirect(reverse("post-detail-page", kwargs={"slug": slug, }))
-        
-        
+
         return render(request, "blog/post-detail.html", {
             "post": post,
             "post_tags": post.tags.all(),
@@ -78,12 +93,16 @@ class PostDetailView(View):
         })
 
 
-# def post_detail(request, slug):
-#     identified_post = get_object_or_404(Post, slug=slug)
-#     return render(request, "blog/post-detail.html", {
-#         "post": identified_post,
-#         "post_tags": identified_post.tags.all()
-#     })
+"""
+This is view to get one post as a function
+
+def post_detail(request, slug):
+    identified_post = get_object_or_404(Post, slug=slug)
+    return render(request, "blog/post-detail.html", {
+        "post": identified_post,
+        "post_tags": identified_post.tags.all()
+    })
+"""
 
 
 class ReadLaterView(View):
@@ -107,7 +126,7 @@ class ReadLaterView(View):
 
         if stored_posts is None:
             stored_posts = []
-        
+
         post_id = int(request.POST["post_id"])
 
         if post_id not in stored_posts:
@@ -118,3 +137,76 @@ class ReadLaterView(View):
         request.session["stored_posts"] = stored_posts
 
         return HttpResponseRedirect("/")
+    
+
+# API part 
+
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    @action(methods=["GET"], detail=True)
+    def authors(self, request, pk=None):
+        author = Author.objects.get(pk=pk)
+        return Response({"authors": author.full_name()})
+
+
+"""
+Class based view to get all posts 
+
+class PostsAPIList(generics.ListCreateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+"""
+
+
+"""
+Class based view to get update a post
+
+class PostAPIUpdate(generics.UpdateAPIView):  # put/patch
+    queryset = Post.objects.all()  # ленивый запрос
+    serializer_class = PostSerializer
+"""
+
+
+"""
+Class based view to get/put/patch/delete a post (1 record)
+
+class PostAPIDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+"""
+
+
+"""
+All functionality above but via basic class APIView with methods definition
+
+class PostsAPIView(APIView):
+    def get(self, request):
+        all_posts = Post.objects.all()
+        return Response({"all_posts": PostSerializer(all_posts, many=True).data})
+
+    def post(self, request):
+        print(request.data)
+        serializer = PostSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({"post": serializer.data})
+
+    def put(self, request, *args, **kwargs):
+        pk = kwargs.get("pk", None)
+        if not pk:
+            return Response({"error": "Method PUT not allowed"})
+
+        try:
+            instance = Post.objects.get(pk=pk)
+        except:
+            return Response({"error": "Object does not exists"})
+
+        serializer = PostSerializer(data=request.data, instance=instance, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"post": serializer.data})
+"""
