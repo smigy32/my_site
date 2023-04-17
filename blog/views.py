@@ -5,13 +5,15 @@ from django.utils.text import slugify
 from django.views.generic import ListView, DetailView
 from django.views import View
 from rest_framework import generics, viewsets
-from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.decorators import action
 
 from .models import Post, Author
 from .forms import CommentForm
 from .serializers import PostSerializer
+from .permissions import IsAdminOrReadOnly, IsOwnerOrReadOnly
 
 
 # Regular part
@@ -142,6 +144,9 @@ class ReadLaterView(View):
 # API part 
 
 
+"""
+Viewset has all needed functionality to handle CRUD requests
+
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
@@ -150,33 +155,33 @@ class PostViewSet(viewsets.ModelViewSet):
     def authors(self, request, pk=None):
         author = Author.objects.get(pk=pk)
         return Response({"authors": author.full_name()})
+"""
 
 
 """
 Class based view to get all posts 
-
+"""
 class PostsAPIList(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-"""
+    permission_classes = (IsAuthenticatedOrReadOnly, )
 
 
 """
-Class based view to get update a post
-
-class PostAPIUpdate(generics.UpdateAPIView):  # put/patch
+Class based view to get/update a post
+"""
+class PostAPIUpdate(generics.RetrieveUpdateAPIView):  # get/put/patch
     queryset = Post.objects.all()  # ленивый запрос
     serializer_class = PostSerializer
+    permission_classes = (IsOwnerOrReadOnly, )
+
 """
-
-
+Class based view to get/delete a post (1 record)
 """
-Class based view to get/put/patch/delete a post (1 record)
-
-class PostAPIDetail(generics.RetrieveUpdateDestroyAPIView):
+class PostAPIDetail(generics.RetrieveDestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-"""
+    permission_classes = (IsAdminOrReadOnly, )
 
 
 """
