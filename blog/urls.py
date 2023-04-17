@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework import routers
 
 from . import views
@@ -21,4 +21,6 @@ urlpatterns = [
     
     # path("api/v1/posts/", views.PostViewSet.as_view({"get": "list"})),
     # path("api/v1/posts/<int:pk>/", views.PostViewSet.as_view({"put": "update"})),
+    path("api/v1/auth/", include("djoser.urls")),
+    re_path(r"^auth/", include("djoser.urls.authtoken")),
 ]
