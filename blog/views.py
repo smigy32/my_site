@@ -5,6 +5,7 @@ from django.utils.text import slugify
 from django.views.generic import ListView, DetailView
 from django.views import View
 from rest_framework import generics, viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -158,6 +159,12 @@ class PostViewSet(viewsets.ModelViewSet):
 """
 
 
+class PostsAPIListPagination(PageNumberPagination):
+    page_size = 3  # default value
+    page_size_query_param = "page_size"  # you can add this query parameter to change pagination (e.g. ?page_size=4) ↓
+    max_page_size = 10000  # but not greater than this number
+
+
 """
 Class based view to get all posts 
 """
@@ -165,7 +172,7 @@ class PostsAPIList(generics.ListCreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, )
-
+    pagination_class = PostsAPIListPagination
 
 """
 Class based view to get/update a post
