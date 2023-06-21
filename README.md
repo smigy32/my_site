@@ -80,13 +80,13 @@ Here are some examples of how to use the API endpoints:
 - Update a blog post:
 
   ```shell
-  curl -X PUT -H "Authorization: Token <your_token>" -H "Content-Type: application/json" -d '{"title": "Updated Post", "content": "New content."}' http://localhost:8000/api/v1/posts/<post_id>/
+  curl -X PUT -H "Authorization: Bearer <your_token>" -H "Content-Type: application/json" -d '{"title": "Updated Post", "content": "New content."}' http://localhost:8000/api/v1/posts/<post_id>/
   ```
 
 - Delete a blog post:
 
   ```shell
-  curl -X DELETE -H "Authorization: Token <your_token>" http://localhost:8000/api/v1/posts/<post_id>/
+  curl -X DELETE -H "Authorization: Bearer <your_token>" http://localhost:8000/api/v1/posts/<post_id>/
   ```
 
 Replace `<your_token>` with your authentication token and `<post_id>` with the ID of the blog post you want to retrieve, update, or delete.
