@@ -32,8 +32,8 @@ class Post(models.Model):
     content = models.TextField(validators=[MinLengthValidator(10)])
     author = models.ForeignKey(
         Author,
-        on_delete=models.SET_NULL,
-        null=True,
+        on_delete=models.CASCADE,
+        null=False,
         related_name="posts"
     )
     tags = models.ManyToManyField(Tag)

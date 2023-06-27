@@ -1,3 +1,6 @@
+import base64
+
+from django.core.files.base import ContentFile
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
@@ -173,6 +176,20 @@ class PostsAPIList(generics.ListCreateAPIView):
     serializer_class = PostSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, )
     pagination_class = PostsAPIListPagination
+    
+    def create(self, request, *args, **kwargs):
+        # Get image data in base64 format from the request
+        image_data = request.data.get("image")
+        
+
+        # Convert base64 image data to a file stream
+        if image_data:
+            format, imgstr = image_data.split(";base64,")
+            ext = format.split('/')[-1]
+            image = ContentFile(base64.b64decode(imgstr), name=f"{request.data.get('slug')}.{ext}")
+            request.data['image'] = image
+
+        return super().create(request, *args, **kwargs)
 
 """
 Class based view to get/update a post
