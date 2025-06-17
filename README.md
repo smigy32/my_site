@@ -40,6 +40,13 @@ Make sure you have the following dependencies installed:
 
    This will start the API server on `http://localhost:8000/`.
 
+5. Create database tables:
+
+   ```shell
+   docker exec -it <container_id> bash
+   python manage.py migrate
+   ```
+
 ## API Endpoints
 
 The following endpoints are available in the API:
